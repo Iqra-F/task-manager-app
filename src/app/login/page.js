@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLoginMutation } from "@/store/slices/authApi";
 import toast from "react-hot-toast";
@@ -10,13 +10,28 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [login, { isLoading }] = useLoginMutation();
 
-  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  // ✅ Redirect if already logged in
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch("/api/me");
+        const data = await res.json();
+        if (data.user) router.push("/dashboard");
+      } catch (err) {
+        // not logged in → do nothing
+      }
+    }
+    checkAuth();
+  }, [router]);
+
+  const onChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   async function handleSubmit(e) {
     e.preventDefault();
     try {
       await login(form).unwrap();
-      toast.success("Welcome back — redirecting");
+      toast.success("Welcome back — redirecting...");
       router.push("/dashboard");
     } catch (err) {
       toast.error(err.data?.error || "Login failed");

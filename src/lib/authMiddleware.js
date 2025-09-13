@@ -1,23 +1,32 @@
 import { verifyToken } from "./jwt";
 import { cookies } from "next/headers";
 
-export function authMiddleware(req) {
+/**
+ * Auth middleware:
+ * - Tries to extract JWT from Authorization header ("Bearer <token>")
+ * - Or from HttpOnly cookie named "token"
+ * - Returns decoded payload (user info) or null if invalid/missing
+ */
+export async function authMiddleware(req) {
   try {
     // 1) Authorization header
     const authHeader = req.headers.get("authorization");
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.split(" ")[1];
-      return verifyToken(token);
+      const payload = verifyToken(token);
+      return payload || null;
     }
 
-    // 2) HttpOnly cookie (using Next's helper)
+    // 2) HttpOnly cookie
     const token = cookies().get("token")?.value;
     if (token) {
-      return verifyToken(token);
+      const payload = verifyToken(token);
+      return payload || null;
     }
 
     return null;
-  } catch {
+  } catch (err) {
+    console.error("authMiddleware error:", err.message);
     return null;
   }
 }

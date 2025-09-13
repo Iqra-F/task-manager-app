@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useRegisterMutation } from "@/store/slices/authApi";
 import toast from "react-hot-toast";
@@ -10,12 +10,25 @@ export default function RegisterPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [register, { isLoading }] = useRegisterMutation();
 
-  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  // ✅ Redirect if already logged in
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch("/api/me");
+        const data = await res.json();
+        if (data.user) router.push("/dashboard");
+      } catch {}
+    }
+    checkAuth();
+  }, [router]);
+
+  const onChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   async function handleSubmit(e) {
     e.preventDefault();
     try {
-      await register(form).unwrap(); // cookie set by server, user auto-fetched
+      await register(form).unwrap();
       toast.success("Registered — redirecting to dashboard");
       router.push("/dashboard");
     } catch (err) {
