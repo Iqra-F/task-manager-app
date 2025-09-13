@@ -2,25 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useRegisterMutation } from "@/store/slices/authApi";
+import { useRegisterMutation, useMeQuery } from "@/store/slices/authApi";
 import toast from "react-hot-toast";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [register, { isLoading }] = useRegisterMutation();
+  const { data: user } = useMeQuery();
 
   // ✅ Redirect if already logged in
   useEffect(() => {
-    async function checkAuth() {
-      try {
-        const res = await fetch("/api/me");
-        const data = await res.json();
-        if (data.user) router.push("/dashboard");
-      } catch {}
+    if (user) {
+      router.replace("/dashboard");
     }
-    checkAuth();
-  }, [router]);
+  }, [user, router]);
 
   const onChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -32,7 +28,7 @@ export default function RegisterPage() {
       toast.success("Registered — redirecting to dashboard");
       router.push("/dashboard");
     } catch (err) {
-      toast.error(err.data?.error || "Registration failed");
+      toast.error(err?.data?.error || "Registration failed");
     }
   }
 
@@ -66,7 +62,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-indigo-600 text-white p-3 rounded"
+          className="w-full bg-indigo-600 text-white p-3 rounded disabled:opacity-50"
         >
           {isLoading ? "Creating..." : "Create Account"}
         </button>

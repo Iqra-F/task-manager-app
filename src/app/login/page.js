@@ -2,27 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useLoginMutation } from "@/store/slices/authApi";
+import { useLoginMutation, useMeQuery } from "@/store/slices/authApi";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" });
   const [login, { isLoading }] = useLoginMutation();
+  const { data: user } = useMeQuery(); // ✅ rely on RTK query, not manual fetch
 
   // ✅ Redirect if already logged in
   useEffect(() => {
-    async function checkAuth() {
-      try {
-        const res = await fetch("/api/me");
-        const data = await res.json();
-        if (data.user) router.push("/dashboard");
-      } catch (err) {
-        // not logged in → do nothing
-      }
+    if (user) {
+      router.replace("/dashboard"); // replace avoids back button loop
     }
-    checkAuth();
-  }, [router]);
+  }, [user, router]);
 
   const onChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -34,7 +28,7 @@ export default function LoginPage() {
       toast.success("Welcome back — redirecting...");
       router.push("/dashboard");
     } catch (err) {
-      toast.error(err.data?.error || "Login failed");
+      toast.error(err?.data?.error || "Login failed");
     }
   }
 
@@ -61,7 +55,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-indigo-600 text-white p-3 rounded"
+          className="w-full bg-indigo-600 text-white p-3 rounded disabled:opacity-50"
         >
           {isLoading ? "Signing in..." : "Sign in"}
         </button>
