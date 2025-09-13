@@ -1,3 +1,4 @@
+
 import bcrypt from "bcryptjs";
 import User from "@/models/User";
 import { connectDB } from "@/lib/mongodb";
@@ -19,12 +20,14 @@ export async function POST(req) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hashedPassword });
+    const newUser = await User.create({ name, email, password: hashedPassword });
 
-    const token = signToken(user);
+    const token = signToken(newUser);
 
-    // Set token in httpOnly cookie
-    cookies().set("token", token, {
+    // Set httpOnly cookie
+    cookies().set({
+      name: "token",
+      value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
@@ -33,8 +36,8 @@ export async function POST(req) {
     });
 
     return new Response(
-      JSON.stringify({ user: { id: user._id, name, email } }),
-      { status: 201 }
+      JSON.stringify({ user: { id: newUser._id, name, email } }),
+      { status: 201, headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {
     return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });

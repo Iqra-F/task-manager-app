@@ -15,7 +15,10 @@ export async function GET(req) {
       return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
     }
 
-    return new Response(JSON.stringify({ user: dbUser }), { status: 200 });
+    return new Response(JSON.stringify({ user: dbUser }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (err) {
     return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });
   }

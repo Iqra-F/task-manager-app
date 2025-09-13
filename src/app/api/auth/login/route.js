@@ -25,10 +25,12 @@ export async function POST(req) {
 
     const token = signToken(user);
 
-    // Set token in httpOnly cookie
-    cookies().set("token", token, {
+    // Secure cookie
+    cookies().set({
+      name: "token",
+      value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production", // https only in prod
       sameSite: "strict",
       path: "/",
       maxAge: 60 * 60 * 24 * 7, // 7 days
@@ -36,7 +38,7 @@ export async function POST(req) {
 
     return new Response(
       JSON.stringify({ user: { id: user._id, name: user.name, email } }),
-      { status: 200 }
+      { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {
     return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });
