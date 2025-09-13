@@ -32,7 +32,7 @@ export async function DELETE(req, { params }) {
     const user = authMiddleware(req);
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
 
-    const { id } = params;
+    const { id } = await  params;
     const task = await Task.findOneAndDelete({ _id: id, user: user.id });
 
     if (!task) return new Response(JSON.stringify({ error: "Task not found" }), { status: 404 });
