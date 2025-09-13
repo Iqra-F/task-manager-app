@@ -18,8 +18,7 @@ export default function RegisterPage() {
     }
   }, [user, checkingAuth, router]);
 
-  const onChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   async function handleSubmit(e) {
     e.preventDefault();

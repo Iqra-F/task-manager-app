@@ -36,6 +36,7 @@ export const authApi = createApi({
     }),
     logout: builder.mutation({
       query: () => ({ url: "/logout", method: "POST" }),
+      invalidatesTags: ["Me"], // automatically clears me query cache
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
@@ -45,6 +46,7 @@ export const authApi = createApi({
     }),
     me: builder.query({
       query: () => "/me",
+      providesTags: ["Me"], // tag this query
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;

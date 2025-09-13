@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useLoginMutation, useMeQuery, useLogoutMutation } from "@/store/slices/authApi";
+import {
+  useLoginMutation,
+  useMeQuery,
+  useLogoutMutation,
+} from "@/store/slices/authApi";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
@@ -20,8 +24,7 @@ export default function LoginPage() {
     }
   }, [user, checkingAuth, router]);
 
-  const onChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   async function handleSubmit(e) {
     e.preventDefault();
