@@ -2,21 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useLoginMutation, useMeQuery } from "@/store/slices/authApi";
+import { useLoginMutation, useMeQuery, useLogoutMutation } from "@/store/slices/authApi";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" });
-  const [login, { isLoading }] = useLoginMutation();
-  const { data: user } = useMeQuery(); // ✅ rely on RTK query, not manual fetch
 
-  // ✅ Redirect if already logged in
+  const [login, { isLoading: loggingIn }] = useLoginMutation();
+  const [logout, { isLoading: loggingOut }] = useLogoutMutation();
+  const { data: user, isLoading: checkingAuth } = useMeQuery();
+
+  // Redirect if already logged in
   useEffect(() => {
-    if (user) {
-      router.replace("/dashboard"); // replace avoids back button loop
+    if (!checkingAuth && user) {
+      router.replace("/dashboard");
     }
-  }, [user, router]);
+  }, [user, checkingAuth, router]);
 
   const onChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -30,6 +32,25 @@ export default function LoginPage() {
     } catch (err) {
       toast.error(err?.data?.error || "Login failed");
     }
+  }
+
+  async function handleLogout() {
+    try {
+      await logout().unwrap();
+      toast.success("Logged out successfully");
+      router.push("/login");
+    } catch {
+      toast.error("Failed to logout");
+    }
+  }
+
+  // Show loading overlay while checking auth
+  if (checkingAuth) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-500 text-lg">Checking authentication...</p>
+      </div>
+    );
   }
 
   return (
@@ -54,12 +75,22 @@ export default function LoginPage() {
         />
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={loggingIn}
           className="w-full bg-indigo-600 text-white p-3 rounded disabled:opacity-50"
         >
-          {isLoading ? "Signing in..." : "Sign in"}
+          {loggingIn ? "Signing in..." : "Sign in"}
         </button>
       </form>
+
+      {user && (
+        <button
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="mt-4 w-full bg-red-600 text-white p-3 rounded disabled:opacity-50"
+        >
+          {loggingOut ? "Logging out..." : "Logout"}
+        </button>
+      )}
     </main>
   );
 }

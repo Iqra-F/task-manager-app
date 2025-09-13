@@ -9,14 +9,14 @@ export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [register, { isLoading }] = useRegisterMutation();
-  const { data: user } = useMeQuery();
+  const { data: user, isLoading: checkingAuth } = useMeQuery();
 
-  // ✅ Redirect if already logged in
+  // Redirect if already logged in
   useEffect(() => {
-    if (user) {
+    if (!checkingAuth && user) {
       router.replace("/dashboard");
     }
-  }, [user, router]);
+  }, [user, checkingAuth, router]);
 
   const onChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -25,11 +25,20 @@ export default function RegisterPage() {
     e.preventDefault();
     try {
       await register(form).unwrap();
-      toast.success("Registered — redirecting to dashboard");
+      toast.success("Registered successfully — redirecting...");
       router.push("/dashboard");
     } catch (err) {
       toast.error(err?.data?.error || "Registration failed");
     }
+  }
+
+  // Show loading overlay while checking auth
+  if (checkingAuth) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-500 text-lg">Checking authentication...</p>
+      </div>
+    );
   }
 
   return (
