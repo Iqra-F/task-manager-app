@@ -1,4 +1,3 @@
-// Simple slice to store user profile (not token, since token is httpOnly cookie).
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
@@ -9,11 +8,10 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setUser(state, action) {
-      // storing user profile so UI can show name, avatar, etc.
+    setUser: (state, action) => {
       state.user = action.payload;
     },
-    clearUser(state) {
+    clearUser: (state) => {
       state.user = null;
     },
   },

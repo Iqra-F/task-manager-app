@@ -5,7 +5,7 @@ export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "/api/auth",
-    credentials: "include", // so cookie is included automatically
+    credentials: "include", // send httpOnly cookie
   }),
   endpoints: (builder) => ({
     register: builder.mutation({
@@ -18,9 +18,7 @@ export const authApi = createApi({
         try {
           const { data } = await queryFulfilled;
           dispatch(setUser(data.user));
-        } catch {
-          // leave error handling to component
-        }
+        } catch {}
       },
     }),
     login: builder.mutation({
@@ -46,7 +44,7 @@ export const authApi = createApi({
       },
     }),
     me: builder.query({
-      query: () => "/me", // endpoint that returns user if cookie valid
+      query: () => "/me",
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;

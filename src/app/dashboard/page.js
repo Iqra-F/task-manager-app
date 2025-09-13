@@ -3,23 +3,16 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useGetTasksQuery } from "@/store/slices/tasksApi";
-import { useMeQuery } from "@/store/slices/authApi";
+import { useMeQuery, useLogoutMutation } from "@/store/slices/authApi";
 import toast from "react-hot-toast";
 
 export default function DashboardPage() {
   const router = useRouter();
-
-  // Fetch current user (httpOnly cookie auth)
   const { data: user, error: userError, isLoading: userLoading } = useMeQuery();
+  const { data: tasks, error: tasksError, isLoading: tasksLoading } = useGetTasksQuery(undefined, { skip: !user });
+  const [logout] = useLogoutMutation();
 
-  // Fetch tasks (only if user is logged in)
-  const {
-    data: tasks,
-    error: tasksError,
-    isLoading: tasksLoading,
-  } = useGetTasksQuery(undefined, { skip: !user });
-
-  // Handle unauthorized redirects
+  // Unauthorized redirects
   useEffect(() => {
     if (userError?.status === 401) {
       toast.error("Please sign in");
@@ -27,16 +20,29 @@ export default function DashboardPage() {
     }
   }, [userError, router]);
 
-  useEffect(() => {
-    if (tasksError?.status === 401) {
-      toast.error("Session expired, sign in again");
+  async function handleLogout() {
+    try {
+      await logout().unwrap();
+      toast.success("Signed out");
       router.push("/login");
+    } catch {
+      toast.error("Logout failed");
     }
-  }, [tasksError, router]);
+  }
 
   return (
     <main className="p-6">
-      <h1 className="text-2xl font-semibold mb-4">Dashboard</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        {user && (
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 text-white px-4 py-2 rounded"
+          >
+            Logout
+          </button>
+        )}
+      </div>
 
       {/* User Info */}
       {userLoading && <p>Loading user…</p>}
@@ -47,7 +53,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Task List */}
+      {/* Tasks */}
       {tasksLoading && <p>Loading tasks…</p>}
       {tasks && tasks.length === 0 && <p>No tasks yet — add your first one.</p>}
       {tasks &&
@@ -55,9 +61,7 @@ export default function DashboardPage() {
           <div key={t._id} className="p-3 border rounded mb-2">
             <div className="flex justify-between">
               <h3 className="font-semibold">{t.title}</h3>
-              <span className="text-sm">
-                {new Date(t.createdAt).toLocaleString()}
-              </span>
+              <span className="text-sm">{new Date(t.createdAt).toLocaleString()}</span>
             </div>
             <p className="text-sm text-gray-600">{t.description}</p>
           </div>
