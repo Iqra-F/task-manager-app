@@ -1,41 +1,35 @@
 "use client";
-
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
+
 import { useGetTasksQuery } from "@/store/slices/tasksApi";
 import { useMeQuery, useLogoutMutation } from "@/store/slices/authApi";
-import toast from "react-hot-toast";
 
 export default function DashboardPage() {
   const router = useRouter();
 
-  // ✅ Fetch current user
-  const {
-    data: user,
-    error: userError,
-    isLoading: userLoading,
-  } = useMeQuery();
-
-  // ✅ Fetch tasks (only if user is present)
+  const { data: user, error: userError, isLoading: userLoading } = useMeQuery();
   const {
     data: tasks,
-    error: tasksError,
     isLoading: tasksLoading,
+    error: tasksError,
   } = useGetTasksQuery(undefined, { skip: !user });
 
   const [logout, { isLoading: logoutLoading }] = useLogoutMutation();
 
-  // ✅ Redirect if unauthorized
+  // 🔹 redirect to login if unauthorized
   useEffect(() => {
-    if (userError?.status === 401) {
+    if (!userLoading && userError?.status === 401) {
       toast.error("Please sign in");
-      router.replace("/login"); // replace avoids back button loop
+      router.replace("/login");
     }
-  }, [userError, router]);
+  }, [userError, userLoading, router]);
 
+  // 🔹 logout handler
   async function handleLogout() {
     try {
-      await logout().unwrap();
+      await logout().unwrap(); // will also dispatch clearUser
       toast.success("Signed out");
       router.replace("/login");
     } catch {
@@ -43,9 +37,16 @@ export default function DashboardPage() {
     }
   }
 
+  if (userLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-500 text-lg">Loading user…</p>
+      </div>
+    );
+  }
+
   return (
     <main className="p-6">
-      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
         {user && (
@@ -59,8 +60,6 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* User Info */}
-      {userLoading && <p>Loading user…</p>}
       {user && (
         <div className="mb-6 p-4 border rounded bg-gray-50">
           <p className="font-medium">Welcome, {user.name}</p>
@@ -68,17 +67,12 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Tasks Section */}
       <section>
         {tasksLoading && <p>Loading tasks…</p>}
         {tasksError && (
-          <p className="text-red-500">
-            Failed to load tasks. Please refresh.
-          </p>
+          <p className="text-red-500">Failed to load tasks. Please refresh.</p>
         )}
-        {tasks && tasks.length === 0 && (
-          <p>No tasks yet — add your first one.</p>
-        )}
+        {tasks && tasks.length === 0 && <p>No tasks yet — add your first one.</p>}
         {tasks &&
           tasks.map((t) => (
             <div key={t._id} className="p-3 border rounded mb-2">

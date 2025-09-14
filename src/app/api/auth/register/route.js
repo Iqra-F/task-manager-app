@@ -2,52 +2,39 @@ import bcrypt from "bcryptjs";
 import User from "@/models/User";
 import { connectDB } from "@/lib/mongodb";
 import { signToken } from "@/lib/jwt";
-import { cookies } from "next/headers";
-import { registerSchema } from "@/lib/validate"; // ✅ Joi schema
 
 export async function POST(req) {
   try {
     await connectDB();
-    const body = await req.json();
+    const { name, email, password } = await req.json();
 
-    // ✅ Validate input
-    const { error, value } = registerSchema.validate(body);
-    if (error) {
-      return new Response(JSON.stringify({ error: error.details[0].message }), {
-        status: 400,
-      });
-    }
-    const { name, email, password } = value;
-
-    // ✅ Check duplicate
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return new Response(JSON.stringify({ error: "User already exists" }), {
-        status: 400,
-      });
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return new Response(JSON.stringify({ error: "Email already in use" }), { status: 400 });
     }
 
-    // ✅ Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ name, email, password: hashedPassword });
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await User.create({ name, email, password: hashed });
 
-    // ✅ Token
-    const token = signToken(newUser);
-    cookies().set({
-      name: "token",
-      value: token,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
+    const token = signToken(user);
 
     return new Response(
-      JSON.stringify({ user: { id: newUser._id, name, email } }),
-      { status: 201, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({
+        user: { id: user._id, name: user.name, email: user.email },
+        token,
+      }),
+      {
+        status: 201,
+        headers: {
+          "Content-Type": "application/json",
+          "Set-Cookie": `token=${token}; HttpOnly; Path=/; SameSite=Strict; ${
+            process.env.NODE_ENV === "production" ? "Secure" : ""
+          }`,
+        },
+      }
     );
-  } catch (error) {
+  } catch (err) {
+    console.error("Register error:", err);
     return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });
   }
 }

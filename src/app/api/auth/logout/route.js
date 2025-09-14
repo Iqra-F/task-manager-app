@@ -3,9 +3,14 @@ export async function POST() {
     status: 200,
     headers: {
       "Content-Type": "application/json",
-      "Set-Cookie": `token=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict; ${
-        process.env.NODE_ENV === "production" ? "Secure" : ""
-      }`,
+      "Set-Cookie": [
+        `token=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict; ${
+          process.env.NODE_ENV === "production" ? "Secure" : ""
+        }`,
+        `refreshToken=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict; ${
+          process.env.NODE_ENV === "production" ? "Secure" : ""
+        }`,
+      ].join(", "),
     },
   });
 }

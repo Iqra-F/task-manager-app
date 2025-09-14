@@ -8,17 +8,21 @@ import toast from "react-hot-toast";
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [register, { isLoading }] = useRegisterMutation();
-  const { data: user, isLoading: checkingAuth } = useMeQuery();
 
-  // Redirect if already logged in
+  const [register, { isLoading: registering }] = useRegisterMutation();
+  const { data: user, isLoading, isFetching } = useMeQuery();
+
+  const authResolved = !isLoading && !isFetching;
+
+  // Redirect to dashboard if logged in
   useEffect(() => {
-    if (!checkingAuth && user) {
+    if (authResolved && user) {
       router.replace("/dashboard");
     }
-  }, [user, checkingAuth, router]);
+  }, [authResolved, user, router]);
 
-  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const onChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -31,8 +35,8 @@ export default function RegisterPage() {
     }
   }
 
-  // Show loading overlay while checking auth
-  if (checkingAuth) {
+  // Show loading overlay until auth is resolved
+  if (!authResolved) {
     return (
       <div className="flex items-center justify-center h-screen">
         <p className="text-gray-500 text-lg">Checking authentication...</p>
@@ -42,39 +46,43 @@ export default function RegisterPage() {
 
   return (
     <main className="max-w-md mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-4">Create account</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          name="name"
-          value={form.name}
-          onChange={onChange}
-          placeholder="Name"
-          className="w-full p-3 border rounded"
-        />
-        <input
-          name="email"
-          value={form.email}
-          onChange={onChange}
-          placeholder="Email"
-          type="email"
-          className="w-full p-3 border rounded"
-        />
-        <input
-          name="password"
-          value={form.password}
-          onChange={onChange}
-          placeholder="Password"
-          type="password"
-          className="w-full p-3 border rounded"
-        />
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-indigo-600 text-white p-3 rounded disabled:opacity-50"
-        >
-          {isLoading ? "Creating..." : "Create Account"}
-        </button>
-      </form>
+      {!user && (
+        <>
+          <h1 className="text-2xl font-semibold mb-4">Create account</h1>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              name="name"
+              value={form.name}
+              onChange={onChange}
+              placeholder="Name"
+              className="w-full p-3 border rounded"
+            />
+            <input
+              name="email"
+              value={form.email}
+              onChange={onChange}
+              placeholder="Email"
+              type="email"
+              className="w-full p-3 border rounded"
+            />
+            <input
+              name="password"
+              value={form.password}
+              onChange={onChange}
+              placeholder="Password"
+              type="password"
+              className="w-full p-3 border rounded"
+            />
+            <button
+              type="submit"
+              disabled={registering}
+              className="w-full bg-indigo-600 text-white p-3 rounded disabled:opacity-50"
+            >
+              {registering ? "Creating..." : "Create Account"}
+            </button>
+          </form>
+        </>
+      )}
     </main>
   );
 }

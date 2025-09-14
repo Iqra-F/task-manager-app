@@ -1,12 +1,20 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { setUser, clearUser } from "./authSlice";
+import { setCredentials, clearCredentials } from "@/store/slices/authSlice";
 
 export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "/api/auth",
-    credentials: "include", // send httpOnly cookie
+    credentials: "include",
+    prepareHeaders: (headers, { getState }) => {
+      const token = getState().auth.accessToken; // ✅ match your slice
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      return headers;
+    },
   }),
+  tagTypes: ["Me"],
   endpoints: (builder) => ({
     register: builder.mutation({
       query: (body) => ({
@@ -17,10 +25,13 @@ export const authApi = createApi({
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setUser(data.user));
+          if (data?.user && data?.token) {
+            dispatch(setCredentials({ user: data.user, accessToken: data.token }));
+          }
         } catch {}
       },
     }),
+
     login: builder.mutation({
       query: (body) => ({
         url: "/login",
@@ -30,29 +41,37 @@ export const authApi = createApi({
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setUser(data.user));
+          if (data?.user && data?.token) {
+            dispatch(setCredentials({ user: data.user, accessToken: data.token }));
+          }
         } catch {}
       },
     }),
+
     logout: builder.mutation({
       query: () => ({ url: "/logout", method: "POST" }),
-      invalidatesTags: ["Me"], // automatically clears me query cache
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
-          dispatch(clearUser());
-        } catch {}
+        } finally {
+          dispatch(clearCredentials());
+        }
       },
     }),
+
     me: builder.query({
       query: () => "/me",
-      providesTags: ["Me"], // tag this query
+      providesTags: ["Me"],
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setUser(data.user));
+          if (data?.user) {
+            dispatch(setCredentials({ user: data.user }));
+          } else {
+            dispatch(clearCredentials());
+          }
         } catch {
-          dispatch(clearUser());
+          dispatch(clearCredentials());
         }
       },
     }),

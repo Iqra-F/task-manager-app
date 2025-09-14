@@ -2,7 +2,7 @@
 
 import { useMeQuery } from "@/store/slices/authApi";
 import { useDispatch } from "react-redux";
-import { setUser, clearUser } from "@/store/slices/authSlice";
+import { setCredentials, clearCredentials } from "@/store/slices/authSlice";
 import { useEffect } from "react";
 
 /**
@@ -16,9 +16,9 @@ export default function AuthInitializer() {
 
   useEffect(() => {
     if (data?.user) {
-      dispatch(setUser(data.user));
-    } else if (error) {
-      dispatch(clearUser());
+      dispatch(setCredentials({ user: data.user, token: data.token }));
+    } else if (error?.status === 401) {
+      dispatch(clearCredentials());
     }
   }, [data, error, dispatch]);
 

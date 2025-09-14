@@ -5,19 +5,15 @@ import { authMiddleware } from "@/lib/authMiddleware";
 export async function GET(req) {
   try {
     await connectDB();
-    const user = await authMiddleware(req); // ✅ async
+    const user = await authMiddleware(req);
 
     if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-      });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
     const dbUser = await User.findById(user.id).select("-password");
     if (!dbUser) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
-        status: 404,
-      });
+      return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
     }
 
     return new Response(
@@ -25,8 +21,7 @@ export async function GET(req) {
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Server error" }), {
-      status: 500,
-    });
+    console.error("Me error:", err);
+    return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });
   }
 }
