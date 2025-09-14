@@ -1,27 +1,22 @@
-import { connectDB } from "@/lib/mongodb";
-import User from "@/models/User";
-import { authMiddleware } from "@/lib/authMiddleware";
+import { verifyToken } from "@/lib/jwt";
+import { cookies } from "next/headers";
 
-export async function GET(req) {
+export async function GET() {
   try {
-    await connectDB();
-    const user = await authMiddleware(req);
-
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    const token = cookies().get("token")?.value;
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+      });
     }
 
-    const dbUser = await User.findById(user.id).select("-password");
-    if (!dbUser) {
-      return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
-    }
-
-    return new Response(
-      JSON.stringify({ user: { id: dbUser._id, name: dbUser.name, email: dbUser.email } }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
-  } catch (err) {
-    console.error("Me error:", err);
-    return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });
+    const decoded = await verifyToken(token);
+    return new Response(JSON.stringify({ user: decoded.user }), {
+      status: 200,
+    });
+  } catch {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+    });
   }
 }

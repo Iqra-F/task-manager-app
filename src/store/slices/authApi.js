@@ -1,3 +1,4 @@
+// src/store/slices/authApi.js
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { setCredentials, clearCredentials } from "@/store/slices/authSlice";
 
@@ -7,42 +8,42 @@ export const authApi = createApi({
     baseUrl: "/api/auth",
     credentials: "include",
     prepareHeaders: (headers, { getState }) => {
-      const token = getState().auth.accessToken; // ✅ match your slice
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
+      const token = getState().auth.token;
+      if (token) headers.set("Authorization", `Bearer ${token}`);
       return headers;
     },
   }),
   tagTypes: ["Me"],
   endpoints: (builder) => ({
     register: builder.mutation({
-      query: (body) => ({
-        url: "/register",
-        method: "POST",
-        body,
-      }),
+      query: (body) => ({ url: "/register", method: "POST", body }),
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          if (data?.user && data?.token) {
-            dispatch(setCredentials({ user: data.user, accessToken: data.token }));
+          if (data?.user) {
+            dispatch(
+              setCredentials({
+                user: data.user,
+                token: data?.token ?? undefined,
+              })
+            );
           }
         } catch {}
       },
     }),
 
     login: builder.mutation({
-      query: (body) => ({
-        url: "/login",
-        method: "POST",
-        body,
-      }),
+      query: (body) => ({ url: "/login", method: "POST", body }),
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          if (data?.user && data?.token) {
-            dispatch(setCredentials({ user: data.user, accessToken: data.token }));
+          if (data?.user) {
+            dispatch(
+              setCredentials({
+                user: data.user,
+                token: data?.token ?? undefined,
+              })
+            );
           }
         } catch {}
       },
@@ -55,6 +56,8 @@ export const authApi = createApi({
           await queryFulfilled;
         } finally {
           dispatch(clearCredentials());
+          // force re-fetch of `me` to instantly reflect logout
+      dispatch(authApi.util.resetApiState());
         }
       },
     }),

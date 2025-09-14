@@ -21,16 +21,15 @@ export default function LoginPage() {
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   async function handleSubmit(e) {
-    e.preventDefault();
-    try {
-      await login(form).unwrap();
-      toast.success("Welcome back — redirecting...");
-      router.push("/dashboard");
-    } catch (err) {
-      toast.error(err?.data?.error || "Login failed");
-    }
+  e.preventDefault();
+  try {
+    await login(form).unwrap();
+    toast.success("Welcome back — redirecting...");
+    router.replace("/dashboard");
+  } catch (err) {
+    toast.error(err?.data?.error || "Login failed");
   }
-
+}
   if (!authResolved)
     return (
       <div className="flex items-center justify-center h-screen">

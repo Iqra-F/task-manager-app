@@ -19,23 +19,22 @@ export default function DashboardPage() {
   const [logout, { isLoading: logoutLoading }] = useLogoutMutation();
 
   // 🔹 redirect to login if unauthorized
-  useEffect(() => {
-    if (!userLoading && userError?.status === 401) {
-      toast.error("Please sign in");
-      router.replace("/login");
-    }
-  }, [userError, userLoading, router]);
-
-  // 🔹 logout handler
-  async function handleLogout() {
-    try {
-      await logout().unwrap(); // will also dispatch clearUser
-      toast.success("Signed out");
-      router.replace("/login");
-    } catch {
-      toast.error("Logout failed");
-    }
+ useEffect(() => {
+  if (!userLoading && !user) {
+    router.replace("/login");
   }
+}, [userError, userLoading, router]);
+
+async function handleLogout() {
+  try {
+    await logout().unwrap();
+    router.replace("/login");
+    toast.success("Signed out");
+  } catch {
+    toast.error("Logout failed");
+  }
+}
+
 
   if (userLoading) {
     return (

@@ -1,3 +1,4 @@
+// src/store/slices/tasksApi.js
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const tasksApi = createApi({
@@ -30,11 +31,7 @@ export const tasksApi = createApi({
       invalidatesTags: [{ type: "Tasks", id: "LIST" }],
     }),
     updateTask: builder.mutation({
-      query: ({ id, ...body }) => ({
-        url: `/tasks/${id}`,
-        method: "PUT",
-        body,
-      }),
+      query: ({ id, ...body }) => ({ url: `/tasks/${id}`, method: "PUT", body }),
       invalidatesTags: (r, e, { id }) => [{ type: "Tasks", id }],
     }),
     deleteTask: builder.mutation({

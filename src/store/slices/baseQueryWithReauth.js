@@ -1,3 +1,4 @@
+// src/store/baseQueryWithReauth.js
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { clearCredentials } from "@/store/slices/authSlice";
 import { toast } from "react-hot-toast";
@@ -7,9 +8,7 @@ const rawBaseQuery = fetchBaseQuery({
   credentials: "include",
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.token;
-    if (token) {
-      headers.set("Authorization", `Bearer ${token}`);
-    }
+    if (token) headers.set("Authorization", `Bearer ${token}`);
     return headers;
   },
 });
@@ -21,7 +20,7 @@ export const baseQueryWithReauth = async (args, api, extraOptions) => {
     // clear redux state
     api.dispatch(clearCredentials());
 
-    // show toast (guarded so it doesn’t spam)
+    // show toast once
     if (!window.__authToastShown) {
       window.__authToastShown = true;
       toast.error("Please sign in");
