@@ -1,40 +1,33 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 
 import { useGetTasksQuery } from "@/store/slices/tasksApi";
 import { useMeQuery, useLogoutMutation } from "@/store/slices/authApi";
+import TaskList from "@/components/TaskList";
+import TaskForm from "@/components/TaskForm";
 
 export default function DashboardPage() {
   const router = useRouter();
-
-  const { data: user, error: userError, isLoading: userLoading } = useMeQuery();
-  const {
-    data: tasks,
-    isLoading: tasksLoading,
-    error: tasksError,
-  } = useGetTasksQuery(undefined, { skip: !user });
-
+  const { data: user, isLoading: userLoading } = useMeQuery();
+  const { data: tasks, isLoading: tasksLoading } = useGetTasksQuery(undefined, { skip: !user });
   const [logout, { isLoading: logoutLoading }] = useLogoutMutation();
+  const [addingTask, setAddingTask] = useState(false);
 
-  // 🔹 redirect to login if unauthorized
- useEffect(() => {
-  if (!userLoading && !user) {
-    router.replace("/login");
+  useEffect(() => {
+    if (!userLoading && !user) router.replace("/login");
+  }, [userLoading, user, router]);
+
+  async function handleLogout() {
+    try {
+      await logout().unwrap();
+      router.replace("/login");
+      toast.success("Signed out");
+    } catch {
+      toast.error("Logout failed");
+    }
   }
-}, [userError, userLoading, router]);
-
-async function handleLogout() {
-  try {
-    await logout().unwrap();
-    router.replace("/login");
-    toast.success("Signed out");
-  } catch {
-    toast.error("Logout failed");
-  }
-}
-
 
   if (userLoading) {
     return (
@@ -66,26 +59,27 @@ async function handleLogout() {
         </div>
       )}
 
+      {/* Add Task */}
+      {addingTask ? (
+        <TaskForm onClose={() => setAddingTask(false)} />
+      ) : (
+        <button
+          onClick={() => setAddingTask(true)}
+          className="mb-4 bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          + Add Task
+        </button>
+      )}
+
+      {/* Task list */}
       <section>
-        {tasksLoading && <p>Loading tasks…</p>}
-        {tasksError && (
-          <p className="text-red-500">Failed to load tasks. Please refresh.</p>
+        {tasksLoading ? (
+          <p>Loading tasks…</p>
+        ) : tasks ? (
+          <TaskList tasks={tasks} />
+        ) : (
+          <p>No tasks yet.</p>
         )}
-        {tasks && tasks.length === 0 && <p>No tasks yet — add your first one.</p>}
-        {tasks &&
-          tasks.map((t) => (
-            <div key={t._id} className="p-3 border rounded mb-2">
-              <div className="flex justify-between">
-                <h3 className="font-semibold">{t.title}</h3>
-                <span className="text-sm text-gray-500">
-                  {new Date(t.createdAt).toLocaleString()}
-                </span>
-              </div>
-              {t.description && (
-                <p className="text-sm text-gray-600">{t.description}</p>
-              )}
-            </div>
-          ))}
       </section>
     </main>
   );
