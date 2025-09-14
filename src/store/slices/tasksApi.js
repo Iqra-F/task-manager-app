@@ -1,49 +1,43 @@
-// src/store/slices/tasksApi.js
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const tasksApi = createApi({
   reducerPath: "tasksApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api",
-    credentials: "include",
-    prepareHeaders: (headers, { getState }) => {
-      const token = getState().auth.token;
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: fetchBaseQuery({ baseUrl: "/api/tasks" }),
   tagTypes: ["Tasks"],
   endpoints: (builder) => ({
     getTasks: builder.query({
-      query: () => "/tasks",
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.map((t) => ({ type: "Tasks", id: t._id })),
-              { type: "Tasks", id: "LIST" },
-            ]
-          : [{ type: "Tasks", id: "LIST" }],
+      query: () => "/",
+      providesTags: ["Tasks"],
     }),
-    createTask: builder.mutation({
-      query: (body) => ({ url: "/tasks", method: "POST", body }),
-      invalidatesTags: [{ type: "Tasks", id: "LIST" }],
+    addTask: builder.mutation({
+      query: (task) => ({
+        url: "/",
+        method: "POST",
+        body: task,
+      }),
+      invalidatesTags: ["Tasks"],
     }),
     updateTask: builder.mutation({
-      query: ({ id, ...body }) => ({ url: `/tasks/${id}`, method: "PUT", body }),
-      invalidatesTags: (r, e, { id }) => [{ type: "Tasks", id }],
+      query: ({ id, ...task }) => ({
+        url: `/${id}`,
+        method: "PUT",
+        body: task,
+      }),
+      invalidatesTags: ["Tasks"],
     }),
     deleteTask: builder.mutation({
-      query: (id) => ({ url: `/tasks/${id}`, method: "DELETE" }),
-      invalidatesTags: (r, e, id) => [{ type: "Tasks", id }],
+      query: (id) => ({
+        url: `/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Tasks"],
     }),
   }),
 });
 
 export const {
   useGetTasksQuery,
-  useCreateTaskMutation,
+  useAddTaskMutation,
   useUpdateTaskMutation,
   useDeleteTaskMutation,
 } = tasksApi;
