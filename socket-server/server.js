@@ -1,3 +1,4 @@
+// socket-server/server.js
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
@@ -13,12 +14,11 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "*", // Replace * with your Next.js URL in production
+    origin: process.env.FRONTEND_URL || "*",
     methods: ["GET", "POST"],
   },
 });
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -31,7 +31,19 @@ io.on("connection", (socket) => {
 
   // Join room by userId if sent
   socket.on("presence:join", ({ userId, name }) => {
+    if (!userId) return;
+
+    // Join the socket.io "room" for that user
+    try {
+      socket.join(userId);
+      console.log(`Socket ${socket.id} joined room ${userId}`);
+    } catch (err) {
+      console.error("socket.join error:", err?.message || err);
+    }
+
     presenceStore.addUser(socket.id, userId, name);
+
+    // Emit presence update to all clients (or you can emit to a specific room)
     io.emit("presence:update", presenceStore.getAll());
   });
 

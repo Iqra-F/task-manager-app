@@ -15,7 +15,7 @@ export default function emitRouter(io) {
     } else {
       io.emit(event, payload);
     }
-
+console.log("Emitting event:", event, "to room:", room || "ALL");
     return res.status(200).json({ ok: true });
   });
 

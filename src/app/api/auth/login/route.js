@@ -29,7 +29,7 @@ export async function POST(req) {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          "Set-Cookie": `token=${token}; HttpOnly; Path=/; SameSite=Strict; ${
+          "Set-Cookie": `token=${token}; HttpOnly; Path=/; SameSite=Lax; ${
             process.env.NODE_ENV === "production" ? "Secure" : ""
           }`,
         },

@@ -7,17 +7,15 @@ export async function GET(req) {
   try {
     await connectDB();
     const user = await authMiddleware(req);
-    if (!user)
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-      });
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    }
 
     const tasks = await Task.find({ user: user.id }).sort({ createdAt: -1 });
     return new Response(JSON.stringify(tasks), { status: 200 });
-  } catch {
-    return new Response(JSON.stringify({ error: "Server error" }), {
-      status: 500,
-    });
+  } catch (err) {
+    console.error("GET /tasks error:", err);
+    return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });
   }
 }
 
@@ -25,17 +23,14 @@ export async function POST(req) {
   try {
     await connectDB();
     const user = await authMiddleware(req);
-    if (!user)
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-      });
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    }
 
     const { title, description, status, priority, dueDate } = await req.json();
 
     if (!title) {
-      return new Response(JSON.stringify({ error: "Title required" }), {
-        status: 400,
-      });
+      return new Response(JSON.stringify({ error: "Title required" }), { status: 400 });
     }
 
     const task = await Task.create({
@@ -47,7 +42,6 @@ export async function POST(req) {
       dueDate,
     });
 
-    // 🔹 Emit socket event
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_SOCKET_URL}/emit`,
@@ -59,13 +53,12 @@ export async function POST(req) {
         { headers: { "x-api-secret": process.env.SOCKET_API_SECRET } }
       );
     } catch (err) {
-      console.error("Socket emit failed", err.message);
+      console.error("Socket emit failed (task:created):", err.message);
     }
 
     return new Response(JSON.stringify(task), { status: 201 });
-  } catch {
-    return new Response(JSON.stringify({ error: "Server error" }), {
-      status: 500,
-    });
+  } catch (err) {
+    console.error("POST /tasks error:", err);
+    return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });
   }
 }

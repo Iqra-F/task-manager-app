@@ -16,54 +16,56 @@ export default function DashboardPage() {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const { data: user, isLoading: userLoading } = useMeQuery();
+  const { data: me, isLoading: userLoading } = useMeQuery();
+  const user = me?.user; // ✅ flatten response
+
   const { data: tasks, isLoading: tasksLoading, error: tasksError } = useGetTasksQuery(undefined, {
     skip: !user,
   });
+
   const [logout, { isLoading: logoutLoading }] = useLogoutMutation();
   const [addingTask, setAddingTask] = useState(false);
 
   // 🔹 Connect socket for this user
   useEffect(() => {
-    if (user) {
-      socket.connect();
+    if (!user) return;
+    console.log("Dashboard user:", user);
+
+    socket.connect();
+
+    socket.on("connect", () => {
+      console.log("✅ Connected:", socket.id, "joining room:", user.id);
       socket.emit("presence:join", { userId: user.id, name: user.name });
+    });
 
-      socket.on("task:created", (task) => {
-        dispatch(
-          tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
-            draft.unshift(task);
-          })
-        );
-        toast.success(`Task created: ${task.title}`);
-      });
+    const handleEvent = (event, payload) => {
+      console.log("Received socket event:", event, payload);
 
-      socket.on("task:updated", (task) => {
-        dispatch(
-          tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
-            const idx = draft.findIndex((t) => t._id === task._id);
-            if (idx !== -1) draft[idx] = task;
-          })
-        );
-        toast.success(`Task updated: ${task.title}`);
-      });
+      dispatch(
+        tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
+          if (event === "task:created") {
+            draft.unshift(payload);
+          } else if (event === "task:updated") {
+            const idx = draft.findIndex((t) => t._id === payload._id);
+            if (idx !== -1) draft[idx] = payload;
+          } else if (event === "task:deleted") {
+            return draft.filter((t) => t._id !== payload._id);
+          }
+        })
+      );
+    };
 
-      socket.on("task:deleted", ({ _id }) => {
-        dispatch(
-          tasksApi.util.updateQueryData("getTasks", undefined, (draft) =>
-            draft.filter((t) => t._id !== _id)
-          )
-        );
-        toast.success("Task deleted");
-      });
+    socket.on("task:created", (task) => handleEvent("task:created", task));
+    socket.on("task:updated", (task) => handleEvent("task:updated", task));
+    socket.on("task:deleted", (task) => handleEvent("task:deleted", task));
 
-      return () => {
-        socket.off("task:created");
-        socket.off("task:updated");
-        socket.off("task:deleted");
-        socket.disconnect();
-      };
-    }
+    return () => {
+      socket.off("connect");
+      socket.off("task:created");
+      socket.off("task:updated");
+      socket.off("task:deleted");
+      socket.disconnect();
+    };
   }, [user, dispatch]);
 
   // 🔹 Redirect to login if unauthorized
@@ -113,7 +115,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* 🔹 Add Task */}
       {addingTask ? (
         <TaskForm onClose={() => setAddingTask(false)} />
       ) : (
@@ -125,7 +126,6 @@ export default function DashboardPage() {
         </button>
       )}
 
-      {/* 🔹 Task list */}
       <section>
         {tasksLoading ? (
           <p>Loading tasks…</p>
