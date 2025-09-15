@@ -140,3 +140,5 @@ Yes — you’ll need **two terminals** at least:
 
 cd task-manager-app/socket-server
 node server.js
+
+**Live URL:**  https://task-manager-app-five-flax.vercel.app/

@@ -2,11 +2,20 @@ import bcrypt from "bcryptjs";
 import User from "@/models/User";
 import { connectDB } from "@/lib/mongodb";
 import { signToken } from "@/lib/jwt";
+import { registerSchema } from "@/lib/validation"; // import your Joi schema
 
 export async function POST(req) {
   try {
     await connectDB();
     const { name, email, password } = await req.json();
+
+    // Validate input using Joi
+    const { error } = registerSchema.validate({ name, email, password });
+    if (error) {
+      return new Response(JSON.stringify({ error: error.details[0].message }), {
+        status: 400,
+      });
+    }
 
     const existing = await User.findOne({ email });
     if (existing) {
