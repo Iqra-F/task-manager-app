@@ -3,16 +3,19 @@ import { useState } from "react";
 import TaskCard from "./TaskCard";
 
 export default function TaskList({ tasks }) {
+  const safeTasks = tasks || []; // ✅ fallback if undefined
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
 
-  const filteredTasks = tasks.filter((t) => {
+  const filteredTasks = safeTasks.filter((t) => {
     const matchesSearch =
       t.title.toLowerCase().includes(search.toLowerCase()) ||
-      (t.description && t.description.toLowerCase().includes(search.toLowerCase()));
+      (t.description &&
+        t.description.toLowerCase().includes(search.toLowerCase()));
     const matchesStatus = filterStatus === "all" || t.status === filterStatus;
-    const matchesPriority = filterPriority === "all" || t.priority === filterPriority;
+    const matchesPriority =
+      filterPriority === "all" || t.priority === filterPriority;
     return matchesSearch && matchesStatus && matchesPriority;
   });
 

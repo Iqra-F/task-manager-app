@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/mongodb";
 import Task from "@/models/Task";
 import { authMiddleware } from "@/lib/authMiddleware";
+import axios from "axios";
 
 export async function GET(req) {
   try {
@@ -14,7 +15,9 @@ export async function GET(req) {
     const tasks = await Task.find({ user: user.id }).sort({ createdAt: -1 });
     return new Response(JSON.stringify(tasks), { status: 200 });
   } catch {
-    return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Server error" }), {
+      status: 500,
+    });
   }
 }
 
@@ -44,8 +47,25 @@ export async function POST(req) {
       dueDate,
     });
 
+    // 🔹 Emit socket event
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_SOCKET_URL}/emit`,
+        {
+          event: "task:created",
+          payload: task,
+          room: user.id,
+        },
+        { headers: { "x-api-secret": process.env.SOCKET_API_SECRET } }
+      );
+    } catch (err) {
+      console.error("Socket emit failed", err.message);
+    }
+
     return new Response(JSON.stringify(task), { status: 201 });
   } catch {
-    return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Server error" }), {
+      status: 500,
+    });
   }
 }
