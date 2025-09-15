@@ -13,7 +13,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "*",
+    origin: process.env.FRONTEND_URL || "https://task-manager-app-five-flax.vercel.app/",
     methods: ["GET", "POST"],
   },
 });
