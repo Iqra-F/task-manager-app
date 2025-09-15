@@ -1,4 +1,3 @@
-// socket-server/lib/presence.js
 export const presenceStore = {
   users: [],
 

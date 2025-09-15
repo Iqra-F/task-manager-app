@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   const { data: me, isLoading: userLoading } = useMeQuery();
-  const user = me?.user; // ✅ flatten response
+  const user = me?.user; //  flatten response
 
   const { data: tasks, isLoading: tasksLoading, error: tasksError } = useGetTasksQuery(undefined, {
     skip: !user,
@@ -47,7 +47,7 @@ export default function DashboardPage() {
     socket.connect();
 
     socket.on("connect", () => {
-      console.log("✅ Connected:", socket.id, "joining room:", user.id);
+      console.log(" Connected:", socket.id, "joining room:", user.id);
       socket.emit("presence:join", { userId: user.id, name: user.name });
     });
 

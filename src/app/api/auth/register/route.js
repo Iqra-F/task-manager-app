@@ -10,7 +10,9 @@ export async function POST(req) {
 
     const existing = await User.findOne({ email });
     if (existing) {
-      return new Response(JSON.stringify({ error: "Email already in use" }), { status: 400 });
+      return new Response(JSON.stringify({ error: "Email already in use" }), {
+        status: 400,
+      });
     }
 
     const hashed = await bcrypt.hash(password, 10);
@@ -35,6 +37,8 @@ export async function POST(req) {
     );
   } catch (err) {
     console.error("Register error:", err);
-    return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Server error" }), {
+      status: 500,
+    });
   }
 }

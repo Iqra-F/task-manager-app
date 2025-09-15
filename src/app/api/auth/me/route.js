@@ -19,7 +19,7 @@ console.log("Decoded user in /me:", decoded);
         user: {
           id: decoded.id,          // consistent with register/login
           email: decoded.email,
-          name: decoded.name || "", // ✅ now dashboard sees name
+          name: decoded.name || "", //  now dashboard sees name
         },
       }),
       { status: 200 }
