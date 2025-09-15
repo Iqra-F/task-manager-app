@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import User from "@/models/User";
 import { connectDB } from "@/lib/mongodb";
 import { signToken } from "@/lib/jwt";
-import { registerSchema } from "@/lib/validation"; // import your Joi schema
+import { registerSchema } from "@/lib/validate"; 
 
 export async function POST(req) {
   try {
